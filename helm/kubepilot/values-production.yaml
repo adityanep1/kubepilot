@@ -1,0 +1,123 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/adityanep1/kubepilot-api
+  tag: sha-6971e006d342dbe44ebd7a42eb03c4aff8dbd709
+  pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - host: kubepilot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: kubepilot-production-tls
+      hosts:
+        - kubepilot.example.com
+
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+
+env:
+  KUBEPILOT_ENVIRONMENT: production
+  KUBEPILOT_K8S_MODE: in_cluster
+  KUBEPILOT_ALLOWED_NAMESPACES: payments,platform,notifications
+  KUBEPILOT_ALLOWED_ACTIONS: cluster:health,deployment:diagnose,deployment:incident-report,deployment:remediation-plan
+  KUBEPILOT_RAG_MODE: faiss
+  KUBEPILOT_AGENT_MODE: langgraph
+  KUBEPILOT_LLM_PROVIDER: azure_openai
+  KUBEPILOT_OIDC_ISSUER: https://identity.example.com/realms/platform
+  KUBEPILOT_OIDC_AUDIENCE: kubepilot-api
+  KUBEPILOT_OIDC_JWKS_URL: https://identity.example.com/realms/platform/protocol/openid-connect/certs
+  KUBEPILOT_OIDC_REQUIRED: "true"
+  KUBEPILOT_OIDC_ROLE_CLAIM: roles
+  KUBEPILOT_OIDC_ROLE_ACTIONS: read-only=chat,knowledge:search,cluster:health,deployment:diagnose,deployment:incident-report,deployment:remediation-plan,system:read;incident-operator=chat,knowledge:search,cluster:health,deployment:diagnose,deployment:incident-report,deployment:remediation-plan,system:read;administrator=*
+  KUBEPILOT_RATE_LIMIT_PER_MINUTE: "120"
+  KUBEPILOT_AUDIT_RETENTION_EVENTS: "10000"
+  KUBEPILOT_OTEL_SERVICE_NAME: kubepilot-api
+
+envFromSecrets:
+  - name: KUBEPILOT_LLM_API_KEY
+    secretName: kubepilot-api-secrets
+    secretKey: llm-api-key
+  - name: KUBEPILOT_LLM_MODEL
+    secretName: kubepilot-api-secrets
+    secretKey: llm-model
+  - name: KUBEPILOT_LLM_ENDPOINT
+    secretName: kubepilot-api-secrets
+    secretKey: llm-endpoint
+  - name: AZURE_OPENAI_API_KEY
+    secretName: kubepilot-api-secrets
+    secretKey: azure-openai-api-key
+  - name: AZURE_OPENAI_ENDPOINT
+    secretName: kubepilot-api-secrets
+    secretKey: azure-openai-endpoint
+  - name: AZURE_OPENAI_DEPLOYMENT
+    secretName: kubepilot-api-secrets
+    secretKey: azure-openai-deployment
+  - name: KUBEPILOT_OTEL_EXPORTER_OTLP_ENDPOINT
+    secretName: kubepilot-api-secrets
+    secretKey: otel-endpoint
+  - name: KUBEPILOT_OTEL_HEADERS
+    secretName: kubepilot-api-secrets
+    secretKey: otel-headers
+
+externalSecret:
+  enabled: true
+  refreshInterval: 1h
+  secretStoreRef:
+    name: kubepilot-production
+    kind: ClusterSecretStore
+  target:
+    name: kubepilot-api-secrets
+    creationPolicy: Owner
+  remoteKey: kubepilot/production/api
+  data:
+    - secretKey: llm-api-key
+      remoteProperty: llm-api-key
+    - secretKey: llm-model
+      remoteProperty: llm-model
+    - secretKey: llm-endpoint
+      remoteProperty: llm-endpoint
+    - secretKey: azure-openai-api-key
+      remoteProperty: azure-openai-api-key
+    - secretKey: azure-openai-endpoint
+      remoteProperty: azure-openai-endpoint
+    - secretKey: azure-openai-deployment
+      remoteProperty: azure-openai-deployment
+    - secretKey: otel-endpoint
+      remoteProperty: otel-endpoint
+    - secretKey: otel-headers
+      remoteProperty: otel-headers
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 2Gi

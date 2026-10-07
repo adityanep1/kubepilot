@@ -1,0 +1,52 @@
+# Production Readiness Checklist
+
+Use this checklist before presenting KubePilot as production-ready for a team or
+customer environment.
+
+## Access Control
+
+- [ ] OIDC is required with the expected issuer, audience, JWKS URL, and role claim.
+- [ ] A valid OIDC role can call only its configured actions.
+- [ ] An invalid, expired, or unauthorized OIDC token is rejected.
+- [ ] `KUBEPILOT_API_KEYS` is absent from the production secret and deployment.
+- [ ] ExternalSecret reports `Ready` after deployment.
+- [ ] A credential rotation refreshes the target Secret without an image rebuild.
+- [ ] `KUBEPILOT_ALLOWED_NAMESPACES` is scoped to approved namespaces.
+- [ ] `KUBEPILOT_ALLOWED_ACTIONS` includes only required read/planning actions.
+- [ ] Kubernetes RBAC is reviewed for least privilege.
+- [ ] Ingress uses TLS and a trusted identity layer.
+
+## Runtime
+
+- [ ] API runs with resource requests and limits.
+- [ ] Production values enable HPA and PodDisruptionBudget.
+- [ ] Health and readiness probes are passing.
+- [ ] Container image tag is immutable.
+- [ ] Secrets are not committed to Git.
+- [ ] A rotated credential is verified against the dependent API or provider.
+
+## AI And Retrieval
+
+- [ ] Runbooks are reviewed for sensitive content.
+- [ ] Retrieval evaluation passes for expected cases.
+- [ ] LLM provider failure behavior is tested.
+- [ ] Generated answers show sources and workflow steps.
+- [ ] Remediation remains approval-gated.
+
+## Observability
+
+- [ ] Prometheus scrapes `/metrics`.
+- [ ] Grafana dashboard is provisioned.
+- [ ] Alert rules are loaded.
+- [ ] OTLP export is configured if central tracing is required.
+- [ ] Audit events are retained according to policy.
+
+## Validation
+
+- [x] `ruff check .` passes.
+- [x] `pytest` passes.
+- [x] `go test ./...` passes for `services/k8s-tool`.
+- [x] `docker compose config` passes.
+- [x] `docker compose --profile monitoring config` passes.
+- [ ] Helm renders default, local, staging, and production values.
+- [ ] `./scripts/local-cluster-smoke.sh` passes on kind.

@@ -1,0 +1,155 @@
+import httpx
+import pytest
+from kubepilot_api.config import get_settings
+
+
+@pytest.mark.anyio
+async def test_cluster_health_returns_unhealthy_workloads(client: httpx.AsyncClient) -> None:
+    response = await client.get("/api/v1/cluster/health")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "degraded"
+    assert body["unhealthy_count"] == 3
+    assert [workload["name"] for workload in body["workloads"]] == [
+        "checkout",
+        "metrics-scraper",
+        "email-worker",
+    ]
+
+
+@pytest.mark.anyio
+async def test_cluster_health_filters_by_namespace(client: httpx.AsyncClient) -> None:
+    response = await client.get("/api/v1/cluster/health", params={"namespace": "payments"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "degraded"
+    assert body["unhealthy_count"] == 1
+    assert body["workloads"][0]["namespace"] == "payments"
+    assert body["workloads"][0]["name"] == "checkout"
+
+
+@pytest.mark.anyio
+async def test_deployment_diagnosis_returns_pods_events_and_recommendations(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get("/api/v1/cluster/namespaces/payments/deployments/checkout/diagnose")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["namespace"] == "payments"
+    assert body["name"] == "checkout"
+    assert body["health"]["status"] == "Degraded"
+    assert [pod["reason"] for pod in body["pods"]] == ["CrashLoopBackOff", "ImagePullBackOff"]
+    assert body["events"][0]["event_type"] == "Warning"
+    assert body["logs"][0]["previous"] is True
+    assert "PAYMENT_GATEWAY_URL" in body["logs"][0]["text"]
+    assert body["recommendations"]
+
+
+@pytest.mark.anyio
+async def test_deployment_diagnosis_returns_scheduling_recommendations(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get(
+        "/api/v1/cluster/namespaces/notifications/deployments/email-worker/diagnose"
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["namespace"] == "notifications"
+    assert body["name"] == "email-worker"
+    assert [pod["reason"] for pod in body["pods"]] == ["Unschedulable", "Unschedulable"]
+    assert body["events"][0]["reason"] == "FailedScheduling"
+    assert any("node capacity" in recommendation for recommendation in body["recommendations"])
+    assert any("CPU requests" in recommendation for recommendation in body["recommendations"])
+
+
+@pytest.mark.anyio
+async def test_deployment_diagnosis_returns_404_for_missing_deployment(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get("/api/v1/cluster/namespaces/default/deployments/missing/diagnose")
+
+    assert response.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_deployment_remediation_plan_returns_approval_gated_actions(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get(
+        "/api/v1/cluster/namespaces/payments/deployments/checkout/remediation-plan"
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["namespace"] == "payments"
+    assert body["name"] == "checkout"
+    assert body["approval_required"] is True
+    assert body["rollback"] == "kubectl rollout undo deployment/checkout -n payments"
+    assert {action["title"] for action in body["actions"]} >= {
+        "Capture rollout evidence",
+        "Rollback bad image rollout",
+        "Restart after config fix",
+    }
+    assert all(action["requires_approval"] is True for action in body["actions"])
+
+
+@pytest.mark.anyio
+async def test_deployment_remediation_plan_rejects_disallowed_action(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KUBEPILOT_ALLOWED_ACTIONS", "deployment:diagnose")
+    get_settings.cache_clear()
+
+    from kubepilot_api.main import create_app
+
+    transport = httpx.ASGITransport(app=create_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get(
+            "/api/v1/cluster/namespaces/payments/deployments/checkout/remediation-plan"
+        )
+
+    get_settings.cache_clear()
+
+    assert response.status_code == 403
+
+
+@pytest.mark.anyio
+async def test_cluster_routes_reject_disallowed_namespace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KUBEPILOT_ALLOWED_NAMESPACES", "payments")
+    get_settings.cache_clear()
+
+    from kubepilot_api.main import create_app
+
+    transport = httpx.ASGITransport(app=create_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get(
+            "/api/v1/cluster/namespaces/platform/deployments/metrics-scraper/diagnose"
+        )
+
+    get_settings.cache_clear()
+
+    assert response.status_code == 403
+
+
+@pytest.mark.anyio
+async def test_cluster_routes_reject_disallowed_action(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("KUBEPILOT_ALLOWED_ACTIONS", "deployment:diagnose")
+    get_settings.cache_clear()
+
+    from kubepilot_api.main import create_app
+
+    transport = httpx.ASGITransport(app=create_app())
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/api/v1/cluster/health")
+
+    get_settings.cache_clear()
+
+    assert response.status_code == 403

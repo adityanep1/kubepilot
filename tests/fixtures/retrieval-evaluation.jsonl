@@ -1,0 +1,12 @@
+{"query":"deployment image pull failing","expected_sources":["docs/runbooks/deployment-rollout-failures.md","docs/runbooks/image-pull-backoff.md"]}
+{"query":"rolling restart a deployment","expected_sources":["docs/runbooks/rolling-restart.md"]}
+{"query":"why are pods restarting","expected_sources":["docs/runbooks/pod-restarts.md"]}
+{"query":"pod keeps restarting repeatedly","expected_sources":["docs/runbooks/pod-restarts.md"]}
+{"query":"why is my container image not pulling","expected_sources":["docs/runbooks/image-pull-backoff.md"]}
+{"query":"image pull backoff error","expected_sources":["docs/runbooks/image-pull-backoff.md"]}
+{"query":"pods are stuck pending","expected_sources":["docs/runbooks/pending-pods-scheduling.md"]}
+{"query":"pod cannot be scheduled","expected_sources":["docs/runbooks/pending-pods-scheduling.md"]}
+{"query":"readiness probe is failing","expected_sources":["docs/runbooks/readiness-probe-failures.md"]}
+{"query":"application is failing readiness checks","expected_sources":["docs/runbooks/readiness-probe-failures.md"]}
+{"query":"deployment is unhealthy","expected_sources":["docs/runbooks/unhealthy-workloads.md"]}
+{"query":"workload has unhealthy pods","expected_sources":["docs/runbooks/unhealthy-workloads.md"]}

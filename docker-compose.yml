@@ -1,0 +1,115 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    ports:
+      - "${KUBEPILOT_WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  api:
+    build: .
+    environment:
+      KUBEPILOT_ENVIRONMENT: local
+      KUBEPILOT_DATABASE_URL: postgresql://kubepilot:kubepilot@postgres:5432/kubepilot
+      KUBEPILOT_LLM_PROVIDER: ${KUBEPILOT_LLM_PROVIDER:-deterministic}
+      KUBEPILOT_LLM_API_KEY: ${KUBEPILOT_LLM_API_KEY:-}
+      KUBEPILOT_LLM_MODEL: ${KUBEPILOT_LLM_MODEL:-}
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY:-}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT:-}
+      AZURE_OPENAI_DEPLOYMENT: ${AZURE_OPENAI_DEPLOYMENT:-}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION:-2024-02-01}
+      KUBEPILOT_K8S_MODE: service
+      KUBEPILOT_K8S_SERVICE_URL: http://k8s-tool:8081
+      KUBEPILOT_RAG_MODE: keyword
+      KUBEPILOT_AGENT_MODE: deterministic
+    ports:
+      - "${KUBEPILOT_API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      k8s-tool:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2)",
+        ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: kubepilot
+      POSTGRES_USER: kubepilot
+      POSTGRES_PASSWORD: kubepilot
+    ports:
+      - "${KUBEPILOT_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kubepilot -d kubepilot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  k8s-tool:
+    build:
+      context: .
+      dockerfile: services/k8s-tool/Dockerfile
+    environment:
+      KUBEPILOT_K8S_TOOL_ADDR: :8081
+      KUBEPILOT_K8S_TOOL_MODE: fixture
+    ports:
+      - "${KUBEPILOT_K8S_TOOL_PORT:-8081}:8081"
+    healthcheck:
+      test: ["CMD", "/k8s-tool", "healthcheck"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    profiles: ["monitoring"]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+    ports:
+      - "${KUBEPILOT_PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    profiles: ["monitoring"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/kubepilot.json:ro
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "${KUBEPILOT_GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres-data:
