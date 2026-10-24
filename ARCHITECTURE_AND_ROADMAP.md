@@ -270,7 +270,7 @@ kubepilot/
 
 ## Still To Build
 
-- [ ] Full local-cluster deployment validation path (in progress)
+- [x] Local Kubernetes deployment validated on kind; pod readiness and API health checks passed (fixture mode)
 
 ---
 
@@ -284,7 +284,7 @@ The first release of KubePilot is considered successful when:
 - [x] Kubernetes status can be queried through Go services
 - [x] FastAPI exposes a chat endpoint
 - [x] Services run locally using Docker
-- [ ] Deployment works on a local Kubernetes cluster (in progress)
+- [x] Deployment works on a local Kubernetes cluster using kind (fixture mode; real-cluster integration not yet validated)
 - [x] Basic metrics are exposed
 - [x] GitHub Actions validates builds and tests
 
