@@ -82,7 +82,7 @@ def evaluate() -> None:
     print(
         f"retrieval_recall_at_{args.limit}={result.recall_at_k:.3f} "
         f"recall_at_1={result.recall_at_1:.3f} "
-         f"mrr={result.mrr:.3f} "
+        f"mrr={result.mrr:.3f} "
         f"passed={result.passed} failed={result.failed} total={result.total}"
     )
     if args.report_output is not None:

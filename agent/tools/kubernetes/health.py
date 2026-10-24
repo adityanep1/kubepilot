@@ -31,9 +31,7 @@ class InMemoryClusterHealthInspector(KubernetesClusterHealthInspector):
     def __init__(self, workloads: tuple[WorkloadHealth, ...] | None = None) -> None:
         from agent.tools.kubernetes.client import InMemoryKubernetesClient
 
-        super().__init__(
-            InMemoryKubernetesClient(deployments=workloads or default_workloads())
-        )
+        super().__init__(InMemoryKubernetesClient(deployments=workloads or default_workloads()))
 
 
 def create_cluster_health_inspector(

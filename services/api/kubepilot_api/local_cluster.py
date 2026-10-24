@@ -51,9 +51,7 @@ def validate_local_cluster_client(
             cluster_response.raise_for_status()
             cluster_payload = cluster_response.json()
             if "status" not in cluster_payload or "unhealthy_count" not in cluster_payload:
-                raise RuntimeError(
-                    "Cluster health payload is missing required status fields."
-                )
+                raise RuntimeError("Cluster health payload is missing required status fields.")
 
             return LocalClusterValidationResult(
                 healthz_status=str(healthz_payload.get("status", "")),

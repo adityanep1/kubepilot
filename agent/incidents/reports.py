@@ -89,16 +89,8 @@ def _summary(
 
 
 def _probable_cause(diagnosis: DeploymentDiagnosis) -> str:
-    pod_reasons = {
-        pod.reason
-        for pod in diagnosis.pods
-        if pod.reason
-    }
-    event_reasons = {
-        event.reason
-        for event in diagnosis.events
-        if event.reason
-    }
+    pod_reasons = {pod.reason for pod in diagnosis.pods if pod.reason}
+    event_reasons = {event.reason for event in diagnosis.events if event.reason}
     event_text = " ".join(event.message.lower() for event in diagnosis.events)
     log_text = " ".join(log.text.lower() for log in diagnosis.logs)
 
@@ -156,8 +148,7 @@ def _evidence(
         EvidenceItem(
             source="pod",
             message=(
-                f"{pod.name} is {pod.phase}"
-                + (f" because {pod.reason}" if pod.reason else "")
+                f"{pod.name} is {pod.phase}" + (f" because {pod.reason}" if pod.reason else "")
             ),
         )
         for pod in unhealthy_pods
@@ -185,12 +176,7 @@ def _evidence(
 
 def _timeline(evidence: tuple[EvidenceItem, ...]) -> tuple[EvidenceItem, ...]:
     ordered_sources = ("deployment", "pod", "event", "log")
-    return tuple(
-        item
-        for source in ordered_sources
-        for item in evidence
-        if item.source == source
-    )
+    return tuple(item for source in ordered_sources for item in evidence if item.source == source)
 
 
 def _status_update(

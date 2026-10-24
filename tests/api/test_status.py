@@ -90,8 +90,7 @@ async def test_platform_capabilities_reflect_runtime_modes(
 
     assert response.status_code == 200
     capabilities = {
-        capability["name"]: capability["status"]
-        for capability in response.json()["capabilities"]
+        capability["name"]: capability["status"] for capability in response.json()["capabilities"]
     }
     assert capabilities["Agentic orchestration"] == "langgraph"
     assert capabilities["Runbook RAG"] == "faiss"

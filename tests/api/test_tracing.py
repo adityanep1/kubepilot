@@ -14,8 +14,7 @@ async def test_trace_middleware_records_http_request_span(client: httpx.AsyncCli
     assert traces_response.status_code == 200
     body = traces_response.json()
     assert any(
-        span["trace_id"] == "trace-1" and span["name"] == "http.request"
-        for span in body["spans"]
+        span["trace_id"] == "trace-1" and span["name"] == "http.request" for span in body["spans"]
     )
 
 
@@ -40,13 +39,8 @@ async def test_trace_spans_include_agent_and_retrieval_work(
     assert chat_response.status_code == 200
     assert search_response.status_code == 200
     body = traces_response.json()
-    spans = [
-        span
-        for span in body["spans"]
-        if span["trace_id"] == "trace-work"
-    ]
+    spans = [span for span in body["spans"] if span["trace_id"] == "trace-work"]
     assert {span["name"] for span in spans} >= {"agent.respond", "knowledge.search"}
     assert any(
-        span["name"] == "knowledge.search" and span["attributes"]["limit"] == "2"
-        for span in spans
+        span["name"] == "knowledge.search" and span["attributes"]["limit"] == "2" for span in spans
     )

@@ -63,20 +63,11 @@ class ChatService:
         yield _event("sources", {"sources": response.sources})
         yield _event(
             "citations",
-            {
-                "citations": [
-                    citation.model_dump(mode="json")
-                    for citation in response.citations
-                ]
-            },
+            {"citations": [citation.model_dump(mode="json") for citation in response.citations]},
         )
         yield _event(
             "workflow_steps",
-            {
-                "workflow_steps": [
-                    step.model_dump(mode="json") for step in response.workflow_steps
-                ]
-            },
+            {"workflow_steps": [step.model_dump(mode="json") for step in response.workflow_steps]},
         )
         yield _event("done", {"request_id": str(response.request_id)})
 

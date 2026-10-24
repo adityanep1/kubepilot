@@ -75,7 +75,13 @@ class GroundedAnswerSynthesizer:
         citations = citations_from_matches(matches)
         source_list = ", ".join(sources)
 
-        answer = f"{base_answer}" + chr(10) * 2 + f"{model_answer}" + chr(10) * 2 + f"**Sources:** {source_list}".strip()
+        answer = (
+            f"{base_answer}"
+            + chr(10) * 2
+            + f"{model_answer}"
+            + chr(10) * 2
+            + f"**Sources:** {source_list}".strip()
+        )
 
         return GroundedAnswer(
             answer=answer,
@@ -122,23 +128,15 @@ def _create_http_synthesizer() -> AnswerSynthesizer:
     endpoint = os.getenv("KUBEPILOT_LLM_ENDPOINT")
 
     if not endpoint:
-        raise ValueError(
-            "KUBEPILOT_LLM_ENDPOINT is required when "
-            "KUBEPILOT_LLM_PROVIDER=http"
-        )
+        raise ValueError("KUBEPILOT_LLM_ENDPOINT is required when KUBEPILOT_LLM_PROVIDER=http")
 
-    return GroundedAnswerSynthesizer(
-        HTTPJSONLLMClient(endpoint)
-    )
+    return GroundedAnswerSynthesizer(HTTPJSONLLMClient(endpoint))
 
 
 def _create_openai_synthesizer() -> AnswerSynthesizer:
     """Create an OpenAI-compatible answer synthesizer."""
 
-    api_key = (
-        os.getenv("KUBEPILOT_LLM_API_KEY")
-        or os.getenv("OPENAI_API_KEY")
-    )
+    api_key = os.getenv("KUBEPILOT_LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
     model = os.getenv("KUBEPILOT_LLM_MODEL")
 
     missing = []
@@ -156,10 +154,7 @@ def _create_openai_synthesizer() -> AnswerSynthesizer:
             f"Missing: {', '.join(missing)}"
         )
 
-    endpoint = (
-        os.getenv("KUBEPILOT_LLM_ENDPOINT")
-        or "https://api.openai.com/v1/chat/completions"
-    )
+    endpoint = os.getenv("KUBEPILOT_LLM_ENDPOINT") or "https://api.openai.com/v1/chat/completions"
 
     return GroundedAnswerSynthesizer(
         OpenAICompatibleLLMClient(
@@ -189,10 +184,7 @@ def _create_azure_openai_synthesizer() -> AnswerSynthesizer:
         missing.append("AZURE_OPENAI_DEPLOYMENT")
 
     if missing:
-        raise ValueError(
-            "Azure OpenAI configuration is incomplete. Missing: "
-            + ", ".join(missing)
-        )
+        raise ValueError("Azure OpenAI configuration is incomplete. Missing: " + ", ".join(missing))
 
     api_version = os.getenv(
         "AZURE_OPENAI_API_VERSION",

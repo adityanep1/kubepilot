@@ -4,7 +4,6 @@ from agent.state.chat import Citation
 from rag import RetrievedDocument
 
 
-
 def build_grounded_answer_prompt(
     *,
     message: str,
@@ -19,18 +18,11 @@ def build_grounded_answer_prompt(
         content = match.document.content.strip()
         title = match.document.title
 
-        context_parts.append(
-            f"[{index}] {title}\n"
-            f"Source: {match.document.source}\n\n"
-            f"{content}"
-        )
+        context_parts.append(f"[{index}] {title}\nSource: {match.document.source}\n\n{content}")
 
     context = "\n\n---\n\n".join(context_parts)
 
-    diagnosis = (
-        diagnosis_context
-        or "No Kubernetes diagnosis evidence was provided."
-    )
+    diagnosis = diagnosis_context or "No Kubernetes diagnosis evidence was provided."
 
     return (
         "You are KubePilot, a Kubernetes operations assistant.\n"
@@ -47,7 +39,6 @@ def build_grounded_answer_prompt(
         "- Cite source numbers when making runbook-backed claims.\n"
         "- Do not invent Kubernetes evidence or claim commands were executed."
     )
-
 
 
 def citations_from_matches(matches: list[RetrievedDocument]) -> tuple[Citation, ...]:

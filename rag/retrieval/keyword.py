@@ -1,4 +1,3 @@
-
 """Keyword-based retriever with phrase and intent-aware ranking."""
 
 import re
@@ -54,11 +53,8 @@ class KeywordRetriever:
         for document in self._documents:
             score = _score_document(query_terms, document)
 
-
             if score > 0:
-                matches.append(
-                    RetrievedDocument(document=document, score=score)
-                )
+                matches.append(RetrievedDocument(document=document, score=score))
 
         matches.sort(
             key=lambda match: (
@@ -103,23 +99,14 @@ def _score_document(
     title_terms = _token_counts(document.title)
     content_terms = _token_counts(document.content)
 
-    title_score = sum(
-        count * title_terms.get(term, 0)
-        for term, count in query_terms.items()
-    )
-    content_score = sum(
-        count * content_terms.get(term, 0)
-        for term, count in query_terms.items()
-    )
+    title_score = sum(count * title_terms.get(term, 0) for term, count in query_terms.items())
+    content_score = sum(count * content_terms.get(term, 0) for term, count in query_terms.items())
 
     specific_score = sum(
         count
         for term, count in query_terms.items()
         if term in IMPORTANT_TERMS
-        and (
-            title_terms.get(term, 0) > 0
-            or content_terms.get(term, 0) > 0
-        )
+        and (title_terms.get(term, 0) > 0 or content_terms.get(term, 0) > 0)
     )
 
     score = title_score * 5 + content_score + specific_score * 3
@@ -131,30 +118,20 @@ def _score_document(
 
     # Prefer the dedicated rolling-restart runbook for safe,
     # gradual, or downtime-conscious restart requests.
-    restart_intent = bool(
-        query & {"restart", "deployment", "pod", "rollout"}
-    )
-    safe_restart_intent = bool(
-        query & {"safely", "gradually", "downtime", "rolling", "without"}
-    )
+    restart_intent = bool(query & {"restart", "deployment", "pod", "rollout"})
+    safe_restart_intent = bool(query & {"safely", "gradually", "downtime", "rolling", "without"})
 
     if restart_intent and safe_restart_intent:
         if {"rolling", "restart"} <= title:
             score += 80
 
-     # Prefer the unhealthy-workloads runbook for general workload health.
-    unhealthy_intent = bool(
-        query & {"unhealthy", "workload", "replica", "failed"}
-    )
-    specific_rollout_intent = bool(
-        query & {"rollout", "available"}
-    )
+    # Prefer the unhealthy-workloads runbook for general workload health.
+    unhealthy_intent = bool(query & {"unhealthy", "workload", "replica", "failed"})
+    specific_rollout_intent = bool(query & {"rollout", "available"})
 
     if unhealthy_intent and not specific_rollout_intent:
         if {"unhealthy", "workload"} <= title:
             score += 40
-
-
 
     # Prefer the dependency runbook for database connectivity,
     # connection errors, DNS, and dependency hostname problems.
@@ -178,35 +155,31 @@ def _score_document(
         elif "database" in query and "database" in document_terms:
             score += 8
 
-
     # Strongly prefer the runbook matching the operator's specific issue.
     intents = [
         (
-    {
-        "imagepullbackoff",
-        "errimagepull",
-        "image",
-        "pull",
-        "registry",
-        "authentication",
-        "auth",
-        "credential",
-        "private",
-    },
-    {"image", "pull", "backoff"},
-),
-        ({"pending", "unschedulable", "scheduling"},
-         {"pending", "pods", "scheduling"}),
-        ({"rollout", "deployment", "deploy"},
-         {"deployment", "rollout", "failures"}),
-        ({"readiness", "probe", "liveness"},
-         {"readiness", "probe", "failures"}),
-        ({"crashloopbackoff", "oomkilled"},
-         {"pod", "restarts"}),
-        ({"dependency", "connection", "dns", "timeout", "database"},
-         {"dependency", "connection", "failures"}),
-        ({"unhealthy", "workload"},
-         {"unhealthy", "workloads"}),
+            {
+                "imagepullbackoff",
+                "errimagepull",
+                "image",
+                "pull",
+                "registry",
+                "authentication",
+                "auth",
+                "credential",
+                "private",
+            },
+            {"image", "pull", "backoff"},
+        ),
+        ({"pending", "unschedulable", "scheduling"}, {"pending", "pods", "scheduling"}),
+        ({"rollout", "deployment", "deploy"}, {"deployment", "rollout", "failures"}),
+        ({"readiness", "probe", "liveness"}, {"readiness", "probe", "failures"}),
+        ({"crashloopbackoff", "oomkilled"}, {"pod", "restarts"}),
+        (
+            {"dependency", "connection", "dns", "timeout", "database"},
+            {"dependency", "connection", "failures"},
+        ),
+        ({"unhealthy", "workload"}, {"unhealthy", "workloads"}),
     ]
 
     for query_markers, title_markers in intents:
@@ -223,12 +196,10 @@ def _score_document(
                 continue
 
             query_phrases = {
-                tuple(query_tokens[i : i + size])
-                for i in range(len(query_tokens) - size + 1)
+                tuple(query_tokens[i : i + size]) for i in range(len(query_tokens) - size + 1)
             }
             title_phrases = {
-                tuple(title_tokens[i : i + size])
-                for i in range(len(title_tokens) - size + 1)
+                tuple(title_tokens[i : i + size]) for i in range(len(title_tokens) - size + 1)
             }
             score += 3 * len(query_phrases & title_phrases)
 
@@ -238,11 +209,7 @@ def _score_document(
 def _tokenize(term_counts: Counter[str]) -> list[str]:
     """Expand normalized token counts into a deterministic token list."""
 
-    return [
-        term
-        for term, count in term_counts.items()
-        for _ in range(count)
-    ]
+    return [term for term, count in term_counts.items() for _ in range(count)]
 
 
 def _token_counts(text: str) -> Counter[str]:
@@ -266,18 +233,15 @@ def _normalize_token(token: str) -> str:
         "terminate": "restart",
         "terminated": "restart",
         "terminating": "restart",
-
         # Scheduling terminology
         "scheduled": "scheduling",
         "schedule": "scheduling",
         "schedules": "scheduling",
-
         # Image-pull terminology
         "download": "pull",
         "downloads": "pull",
         "downloading": "pull",
         "downloaded": "pull",
-
         # Dependency connectivity terminology
         "connect": "connection",
         "connects": "connection",
@@ -287,7 +251,6 @@ def _normalize_token(token: str) -> str:
         "timeouts": "timeout",
         "hostnames": "hostname",
         "databases": "database",
-
         # Readiness terminology
         "ready": "readiness",
         "checks": "check",

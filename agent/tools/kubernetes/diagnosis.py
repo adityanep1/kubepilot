@@ -63,26 +63,12 @@ def _recommendations(
     events: object,
     logs: object,
 ) -> tuple[str, ...]:
-    pod_reasons = {
-        pod.reason
-        for pod in pods
-        if getattr(pod, "reason", None)
-    }
-    event_reasons = {
-        event.reason
-        for event in events
-        if getattr(event, "reason", None)
-    }
+    pod_reasons = {pod.reason for pod in pods if getattr(pod, "reason", None)}
+    event_reasons = {event.reason for event in events if getattr(event, "reason", None)}
     event_text = "\n".join(
-        event.message.lower()
-        for event in events
-        if getattr(event, "message", None)
+        event.message.lower() for event in events if getattr(event, "message", None)
     )
-    log_text = "\n".join(
-        log.text.lower()
-        for log in logs
-        if getattr(log, "text", None)
-    )
+    log_text = "\n".join(log.text.lower() for log in logs if getattr(log, "text", None))
     recommendations: list[str] = []
 
     if "ImagePullBackOff" in pod_reasons or "Failed" in event_reasons:

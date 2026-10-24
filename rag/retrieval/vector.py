@@ -22,8 +22,7 @@ class VectorRetriever:
         self._documents = documents
         self._embedding_model = embedding_model or HashingEmbeddingModel()
         self._vectors = vectors or [
-            self._embedding_model.embed(_document_text(document))
-            for document in documents
+            self._embedding_model.embed(_document_text(document)) for document in documents
         ]
         self._faiss_index = None
         self._numpy = None
@@ -97,6 +96,5 @@ def _document_text(document: Document) -> str:
 
 def _dot(left: list[float], right: list[float]) -> float:
     return sum(
-        left_value * right_value
-        for left_value, right_value in zip(left, right, strict=True)
+        left_value * right_value for left_value, right_value in zip(left, right, strict=True)
     )

@@ -32,9 +32,7 @@ class GraphAgent:
     def __init__(self, fallback_agent: KubePilotAgent | None = None) -> None:
         self._fallback_agent = fallback_agent or KubePilotAgent()
         self._operation_agent = (
-            self._fallback_agent
-            if isinstance(self._fallback_agent, KubePilotAgent)
-            else None
+            self._fallback_agent if isinstance(self._fallback_agent, KubePilotAgent) else None
         )
         self._graph = self._build_graph()
 

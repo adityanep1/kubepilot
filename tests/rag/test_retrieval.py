@@ -1,5 +1,3 @@
-from django.core.serializers import python
-
 from rag.models import Document
 from rag.retrieval import KeywordRetriever, VectorRetriever
 
@@ -105,23 +103,23 @@ def test_safe_deployment_restart_query_ranks_rolling_restart_first() -> None:
 
     assert matches
     assert matches[0].document.title == "Rolling Restart"
-from rag.models import Document
-from rag.retrieval import KeywordRetriever
 
 
 def test_image_pull_query_ranks_image_pull_runbook_first() -> None:
-    retriever = KeywordRetriever([
-        Document(
-            source="deployment-rollout-failures.md",
-            title="Deployment rollout failures",
-            content="Investigate failed deployments and rollout status.",
-        ),
-        Document(
-            source="image-pull-backoff.md",
-            title="Image Pull Backoff",
-            content="ImagePullBackOff occurs when Kubernetes cannot pull an image.",
-        ),
-    ])
+    retriever = KeywordRetriever(
+        [
+            Document(
+                source="deployment-rollout-failures.md",
+                title="Deployment rollout failures",
+                content="Investigate failed deployments and rollout status.",
+            ),
+            Document(
+                source="image-pull-backoff.md",
+                title="Image Pull Backoff",
+                content="ImagePullBackOff occurs when Kubernetes cannot pull an image.",
+            ),
+        ]
+    )
 
     matches = retriever.search("How do I fix ImagePullBackOff?")
     assert matches
@@ -129,18 +127,20 @@ def test_image_pull_query_ranks_image_pull_runbook_first() -> None:
 
 
 def test_pending_query_ranks_scheduling_runbook_first() -> None:
-    retriever = KeywordRetriever([
-        Document(
-            source="pod-restarts.md",
-            title="Pod Restarts",
-            content="Investigate restarted containers and previous logs.",
-        ),
-        Document(
-            source="pending-pods-scheduling.md",
-            title="Pending Pods And Scheduling Failures",
-            content="Troubleshoot Pending and Unschedulable pods.",
-        ),
-    ])
+    retriever = KeywordRetriever(
+        [
+            Document(
+                source="pod-restarts.md",
+                title="Pod Restarts",
+                content="Investigate restarted containers and previous logs.",
+            ),
+            Document(
+                source="pending-pods-scheduling.md",
+                title="Pending Pods And Scheduling Failures",
+                content="Troubleshoot Pending and Unschedulable pods.",
+            ),
+        ]
+    )
 
     matches = retriever.search("Why are my pods Pending?")
     assert matches
@@ -148,18 +148,20 @@ def test_pending_query_ranks_scheduling_runbook_first() -> None:
 
 
 def test_deployment_rollout_query_ranks_rollout_runbook_first() -> None:
-    retriever = KeywordRetriever([
-        Document(
-            source="readiness-probe-failures.md",
-            title="Readiness Probe Failures",
-            content="Investigate failed readiness probes.",
-        ),
-        Document(
-            source="deployment-rollout-failures.md",
-            title="Deployment rollout failures",
-            content="Investigate failed deployment rollouts and replicas.",
-        ),
-    ])
+    retriever = KeywordRetriever(
+        [
+            Document(
+                source="readiness-probe-failures.md",
+                title="Readiness Probe Failures",
+                content="Investigate failed readiness probes.",
+            ),
+            Document(
+                source="deployment-rollout-failures.md",
+                title="Deployment rollout failures",
+                content="Investigate failed deployment rollouts and replicas.",
+            ),
+        ]
+    )
 
     matches = retriever.search("Why is my deployment rollout failing?")
     assert matches
@@ -167,18 +169,20 @@ def test_deployment_rollout_query_ranks_rollout_runbook_first() -> None:
 
 
 def test_readiness_query_ranks_readiness_runbook_first() -> None:
-    retriever = KeywordRetriever([
-        Document(
-            source="pod-restarts.md",
-            title="Pod Restarts",
-            content="Investigate restart counts and previous logs.",
-        ),
-        Document(
-            source="readiness-probe-failures.md",
-            title="Readiness Probe Failures",
-            content="Troubleshoot failing readiness probes and health checks.",
-        ),
-    ])
+    retriever = KeywordRetriever(
+        [
+            Document(
+                source="pod-restarts.md",
+                title="Pod Restarts",
+                content="Investigate restart counts and previous logs.",
+            ),
+            Document(
+                source="readiness-probe-failures.md",
+                title="Readiness Probe Failures",
+                content="Troubleshoot failing readiness probes and health checks.",
+            ),
+        ]
+    )
 
     matches = retriever.search("Why is my readiness probe failing?")
     assert matches
@@ -204,9 +208,7 @@ def test_private_registry_auth_query_ranks_image_pull_first() -> None:
         ],
     )
 
-    matches = retriever.search(
-        "private registry authentication failed"
-    )
+    matches = retriever.search("private registry authentication failed")
 
     assert matches
     assert matches[0].document.title == "Image Pull Backoff"

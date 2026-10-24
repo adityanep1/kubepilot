@@ -38,8 +38,7 @@ async def test_grounded_answer_synthesizer_handles_missing_context() -> None:
     answer = await synthesizer.synthesize(message="What changed?", matches=[])
 
     assert answer.answer == (
-        'KubePilot received your question: "What changed?". '
-        "No matching runbook was found yet."
+        'KubePilot received your question: "What changed?". No matching runbook was found yet.'
     )
     assert answer.sources == ()
 

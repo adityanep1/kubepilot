@@ -5,7 +5,6 @@ import re
 from pathlib import Path
 from typing import Protocol
 
-
 from agent.answers import AnswerSynthesizer, create_answer_synthesizer
 from agent.graph.intents import Intent, classify_intent
 from agent.incidents import IncidentReport, build_deployment_incident_report
@@ -126,6 +125,7 @@ class KubePilotAgent:
             sources=source_titles(matches),
             workflow_steps=_workflow_steps_for_intent(classify_intent(message)),
         )
+
     async def answer_deployment_diagnosis(
         self,
         message: str,
@@ -135,34 +135,32 @@ class KubePilotAgent:
         name: str,
         diagnosis: DeploymentDiagnosis | None = None,
     ) -> AgentOutput:
-            """Build a grounded response for deployment diagnosis requests."""
+        """Build a grounded response for deployment diagnosis requests."""
 
-            current_diagnosis = diagnosis
-            if current_diagnosis is None:
-                current_diagnosis = await self.diagnose_deployment(
-                    namespace=namespace,
-                    name=name,
-                )
-
-            diagnosis_context = _build_deployment_diagnosis_answer(
-                message,
-                current_diagnosis,
+        current_diagnosis = diagnosis
+        if current_diagnosis is None:
+            current_diagnosis = await self.diagnose_deployment(
+                namespace=namespace,
+                name=name,
             )
 
-            grounded_answer = await self._answer_synthesizer.synthesize(
-                message=message,
-                matches=matches,
-                diagnosis_context=diagnosis_context,
-            )
+        diagnosis_context = _build_deployment_diagnosis_answer(
+            message,
+            current_diagnosis,
+        )
 
-            return AgentOutput(
-                answer=f"{diagnosis_context} {grounded_answer.answer}".strip(),
-                sources=source_titles(matches),
-                citations=grounded_answer.citations,
-                workflow_steps=_workflow_steps_for_intent(
-                    classify_intent(message)
-                ),
-            )
+        grounded_answer = await self._answer_synthesizer.synthesize(
+            message=message,
+            matches=matches,
+            diagnosis_context=diagnosis_context,
+        )
+
+        return AgentOutput(
+            answer=f"{diagnosis_context} {grounded_answer.answer}".strip(),
+            sources=source_titles(matches),
+            citations=grounded_answer.citations,
+            workflow_steps=_workflow_steps_for_intent(classify_intent(message)),
+        )
 
     async def answer_incident_report(
         self,
@@ -212,6 +210,7 @@ class KubePilotAgent:
             workflow_steps=_workflow_steps_for_intent(classify_intent(message)),
         )
 
+
 def create_agent() -> Agent:
     """Create the default KubePilot agent runtime."""
 
@@ -255,7 +254,7 @@ def _workflow_steps_for_intent(intent: Intent) -> tuple[WorkflowStep, ...]:
             WorkflowStep("inspect_cluster", "Collected workload health from Kubernetes."),
             WorkflowStep("summarize_health", "Summarized degraded workloads and next action."),
             WorkflowStep("review_output", "Checked the answer for a usable operator response."),
-    )
+        )
     if intent.name == "deployment_diagnosis":
         return common + (
             WorkflowStep(
@@ -360,9 +359,7 @@ def _build_deployment_diagnosis_answer(
 
     unhealthy_pods = [pod for pod in diagnosis.pods if not pod.ready]
     pod_summary = (
-        f"{len(unhealthy_pods)} unhealthy pod(s)"
-        if unhealthy_pods
-        else "no unhealthy pods found"
+        f"{len(unhealthy_pods)} unhealthy pod(s)" if unhealthy_pods else "no unhealthy pods found"
     )
     event_summary = (
         f"{len(diagnosis.events)} relevant event(s)"
@@ -370,9 +367,7 @@ def _build_deployment_diagnosis_answer(
         else "no relevant events found"
     )
     log_summary = (
-        f"{len(diagnosis.logs)} log excerpt(s)"
-        if diagnosis.logs
-        else "no log excerpts captured"
+        f"{len(diagnosis.logs)} log excerpt(s)" if diagnosis.logs else "no log excerpts captured"
     )
     recommendations = " ".join(diagnosis.recommendations)
     return "\n".join(

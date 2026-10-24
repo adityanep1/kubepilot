@@ -1,4 +1,3 @@
-
 """Retrieval evaluation helpers."""
 
 import json
@@ -59,25 +58,18 @@ def load_evaluation_cases(path: Path) -> list[EvaluationCase]:
 
     cases: list[EvaluationCase] = []
 
-    for line_number, line in enumerate(
-        path.read_text(encoding="utf-8").splitlines(), start=1
-    ):
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
 
         try:
             payload = json.loads(line)
         except json.JSONDecodeError as exc:
-            raise ValueError(
-                f"Invalid JSON on evaluation line {line_number}"
-            ) from exc
+            raise ValueError(f"Invalid JSON on evaluation line {line_number}") from exc
 
         expected_sources = payload.get("expected_sources")
 
-        if (
-            not isinstance(payload.get("query"), str)
-            or not isinstance(expected_sources, list)
-        ):
+        if not isinstance(payload.get("query"), str) or not isinstance(expected_sources, list):
             raise ValueError(f"Invalid evaluation case on line {line_number}")
 
         cases.append(
@@ -107,10 +99,7 @@ def evaluate_retriever(
 
     for case in cases:
         matches = retriever.search(case.query, limit=limit)
-        expected = {
-            _normalize_source_path(source)
-            for source in case.expected_sources
-        }
+        expected = {_normalize_source_path(source) for source in case.expected_sources}
 
         if not expected:
             continue
@@ -154,19 +143,11 @@ def evaluate_retriever_detailed(
     for case in cases:
         matches = retriever.search(case.query, limit=limit)
 
-        returned_sources = tuple(
-            _normalize_source_path(match.document.source)
-            for match in matches
-        )
+        returned_sources = tuple(_normalize_source_path(match.document.source) for match in matches)
         returned_source_set = set(returned_sources)
-        expected_source_set = {
-            _normalize_source_path(source)
-            for source in case.expected_sources
-        }
+        expected_source_set = {_normalize_source_path(source) for source in case.expected_sources}
 
-        passed = bool(expected_source_set) and expected_source_set.issubset(
-            returned_source_set
-        )
+        passed = bool(expected_source_set) and expected_source_set.issubset(returned_source_set)
 
         case_results.append(
             EvaluationCaseResult(

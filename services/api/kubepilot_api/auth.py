@@ -84,8 +84,7 @@ def _has_action_access(claims: dict[str, Any], path: str, settings: Any) -> bool
     action = _action_for_path(path)
     role_actions = dict(settings.oidc_role_actions)
     return any(
-        action in role_actions.get(role, ()) or "*" in role_actions.get(role, ())
-        for role in roles
+        action in role_actions.get(role, ()) or "*" in role_actions.get(role, ()) for role in roles
     )
 
 

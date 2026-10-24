@@ -113,8 +113,7 @@ async def test_agent_handles_missing_runbook_context() -> None:
     output = await agent.run(AgentInput(message="What is happening?"))
 
     assert output.answer == (
-        'KubePilot received your question: "What is happening?". '
-        "No matching runbook was found yet."
+        'KubePilot received your question: "What is happening?". No matching runbook was found yet.'
     )
     assert output.sources == ()
 

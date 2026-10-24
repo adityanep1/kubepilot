@@ -1,4 +1,3 @@
-
 """LLM client interfaces and local provider implementations."""
 
 import asyncio
@@ -29,10 +28,7 @@ def _section(prompt: str, name: str) -> str:
         "\n\nKUBERNETES EVIDENCE:\n",
         "\n\nRESPONSE REQUIREMENTS:\n",
     )
-    positions = [
-        pos for header in headers
-        if (pos := prompt.find(header, start)) != -1
-    ]
+    positions = [pos for header in headers if (pos := prompt.find(header, start)) != -1]
     end = min(positions) if positions else len(prompt)
     return prompt[start:end].strip()
 
@@ -54,46 +50,91 @@ class DeterministicLLMClient:
             title = "Troubleshooting ImagePullBackOff"
             steps = [
                 ("Inspect pod events", "kubectl describe pod <pod-name> -n <namespace>"),
-                ("Check the configured image", "kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.containers[*].image}'"),
+                (
+                    "Check the configured image",
+                    (
+                        "kubectl get pod <pod-name> -n <namespace> "
+                        "-o jsonpath='{.spec.containers[*].image}'"
+                    ),
+                ),
                 ("Check image-pull secrets", "kubectl get pod <pod-name> -n <namespace> -o yaml"),
             ]
-            note = "Check the event messages for an incorrect image name or tag, registry access problems, or missing image-pull credentials."
+            note = (
+                "Check the event messages for an incorrect image name or tag, "
+                "registry access problems, or missing image-pull credentials."
+            )
 
         elif "crashloopbackoff" in q or ("crash" in q and "pod" in q):
             title = "Troubleshooting CrashLoopBackOff"
             steps = [
-                ("Inspect the pod and its termination reason", "kubectl describe pod <pod-name> -n <namespace>"),
-                ("Read logs from the previous container", "kubectl logs <pod-name> -n <namespace> --previous"),
-                ("Check recent namespace events", "kubectl get events -n <namespace> --sort-by=.lastTimestamp"),
+                (
+                    "Inspect the pod and its termination reason",
+                    "kubectl describe pod <pod-name> -n <namespace>",
+                ),
+                (
+                    "Read logs from the previous container",
+                    "kubectl logs <pod-name> -n <namespace> --previous",
+                ),
+                (
+                    "Check recent namespace events",
+                    "kubectl get events -n <namespace> --sort-by=.lastTimestamp",
+                ),
             ]
-            note = "Use the termination reason and previous logs to narrow down the cause before changing the workload."
+            note = (
+                "Use the termination reason and previous logs to narrow down "
+                "the cause before changing the workload."
+            )
 
         elif "pending" in q or "unschedulable" in q or "not schedul" in q:
             title = "Troubleshooting Pending Pods"
             steps = [
                 ("Inspect scheduling events", "kubectl describe pod <pod-name> -n <namespace>"),
                 ("Check node capacity and status", "kubectl get nodes"),
-                ("Review recent events", "kubectl get events -n <namespace> --sort-by=.lastTimestamp"),
+                (
+                    "Review recent events",
+                    "kubectl get events -n <namespace> --sort-by=.lastTimestamp",
+                ),
             ]
-            note = "Look for insufficient CPU or memory, storage constraints, node selectors, taints, or unavailable persistent volumes."
+            note = (
+                "Look for insufficient CPU or memory, storage constraints, "
+                "node selectors, taints, or unavailable persistent volumes."
+            )
 
         elif "readiness" in q or "probe" in q:
             title = "Troubleshooting Readiness Probe Failures"
             steps = [
-                ("Inspect pod events and probe configuration", "kubectl describe pod <pod-name> -n <namespace>"),
+                (
+                    "Inspect pod events and probe configuration",
+                    "kubectl describe pod <pod-name> -n <namespace>",
+                ),
                 ("Read container logs", "kubectl logs <pod-name> -n <namespace>"),
-                ("Inspect the workload configuration", "kubectl get pod <pod-name> -n <namespace> -o yaml"),
+                (
+                    "Inspect the workload configuration",
+                    "kubectl get pod <pod-name> -n <namespace> -o yaml",
+                ),
             ]
-            note = "Verify the probe path, port, timing, and whether the application is ready to serve traffic."
+            note = (
+                "Verify the probe path, port, timing, and whether the application "
+                "is ready to serve traffic."
+            )
 
         elif "deployment" in q or "rollout" in q:
             title = "Troubleshooting Deployment Rollouts"
             steps = [
-                ("Check rollout status", "kubectl rollout status deployment/<deployment-name> -n <namespace>"),
-                ("Inspect deployment events", "kubectl describe deployment <deployment-name> -n <namespace>"),
+                (
+                    "Check rollout status",
+                    "kubectl rollout status deployment/<deployment-name> -n <namespace>",
+                ),
+                (
+                    "Inspect deployment events",
+                    "kubectl describe deployment <deployment-name> -n <namespace>",
+                ),
                 ("Check replica and pod status", "kubectl get pods -n <namespace>"),
             ]
-            note = "Check failed replicas, image errors, scheduling events, and readiness before deciding whether to roll back."
+            note = (
+                "Check failed replicas, image errors, scheduling events, and "
+                "readiness before deciding whether to roll back."
+            )
 
         elif "connection" in q or "dependency" in q or "connect" in q:
             title = "Troubleshooting Dependency Connection Failures"
@@ -102,7 +143,10 @@ class DeterministicLLMClient:
                 ("Inspect affected pod events", "kubectl describe pod <pod-name> -n <namespace>"),
                 ("Review application logs", "kubectl logs <pod-name> -n <namespace>"),
             ]
-            note = "Verify the service name, target port, endpoints, network policies, and dependency availability."
+            note = (
+                "Verify the service name, target port, endpoints, network policies, "
+                "and dependency availability."
+            )
 
         elif "unhealthy" in q or "not healthy" in q:
             title = "Troubleshooting Unhealthy Workloads"
@@ -111,16 +155,28 @@ class DeterministicLLMClient:
                 ("Inspect the affected pod", "kubectl describe pod <pod-name> -n <namespace>"),
                 ("Review application logs", "kubectl logs <pod-name> -n <namespace>"),
             ]
-            note = "Use pod conditions, events, and logs to determine whether the problem is scheduling, startup, probes, or application failure."
+            note = (
+                "Use pod conditions, events, and logs to determine whether the "
+                "problem is scheduling, startup, probes, or application failure."
+            )
 
         elif "restart" in q and ("pod" in q or "kubernetes" in q):
             title = "Troubleshooting Kubernetes Pod Restarts"
             steps = [
                 ("Check restart counts and pod status", "kubectl get pods -n <namespace>"),
-                ("Inspect pod events and termination reason", "kubectl describe pod <pod-name> -n <namespace>"),
+                (
+                    "Inspect pod events and termination reason",
+                    "kubectl describe pod <pod-name> -n <namespace>",
+                ),
                 ("Check current logs", "kubectl logs <pod-name> -n <namespace>"),
-                ("Read previous container logs", "kubectl logs <pod-name> -n <namespace> --previous"),
-                ("Review recent events", "kubectl get events -n <namespace> --sort-by=.lastTimestamp"),
+                (
+                    "Read previous container logs",
+                    "kubectl logs <pod-name> -n <namespace> --previous",
+                ),
+                (
+                    "Review recent events",
+                    "kubectl get events -n <namespace> --sort-by=.lastTimestamp",
+                ),
             ]
             note = "Check the termination reason and logs before changing the workload."
 
@@ -129,18 +185,24 @@ class DeterministicLLMClient:
 
         answer = [f"## {title}", ""]
         for index, (description, command) in enumerate(steps, start=1):
-            answer.extend([
-                f"{index}. **{description}:**",
-                "   ```bash",
-                f"   {command}",
-                "   ```",
-                "",
-            ])
+            answer.extend(
+                [
+                    f"{index}. **{description}:**",
+                    "   ```bash",
+                    f"   {command}",
+                    "   ```",
+                    "",
+                ]
+            )
         answer.append(note)
-        answer.extend([
-            "",
-            "Replace placeholder names such as `<namespace>` and `<pod-name>` with your actual values. These commands inspect resources; they do not automatically fix the issue.",
-        ])
+        answer.extend(
+            [
+                "",
+                "Replace placeholder names such as `<namespace>` and `<pod-name>` "
+                "with your actual values. These commands inspect resources; "
+                "they do not automatically fix the issue.",
+            ]
+        )
         return "\n".join(answer)
 
 
@@ -171,17 +233,14 @@ class HTTPJSONLLMClient:
             headers={"content-type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(
-            request, timeout=self._timeout_seconds
-        ) as response:
+        with urllib.request.urlopen(request, timeout=self._timeout_seconds) as response:
             body = response.read().decode("utf-8")
 
         data = json.loads(body)
         answer = data.get("answer", data.get("text"))
         if not isinstance(answer, str) or not answer.strip():
             raise RuntimeError(
-                "LLM provider response must include a non-empty "
-                "answer or text field."
+                "LLM provider response must include a non-empty answer or text field."
             )
         return answer.strip()
 
@@ -226,10 +285,7 @@ class OpenAICompatibleLLMClient:
         endpoint = self._endpoint
         if self._api_version:
             separator = "&" if "?" in endpoint else "?"
-            endpoint = (
-                f"{endpoint}{separator}"
-                f"api-version={self._api_version}"
-            )
+            endpoint = f"{endpoint}{separator}api-version={self._api_version}"
 
         request = urllib.request.Request(
             endpoint,
@@ -237,30 +293,21 @@ class OpenAICompatibleLLMClient:
             headers=headers,
             method="POST",
         )
-        with urllib.request.urlopen(
-            request, timeout=self._timeout_seconds
-        ) as response:
+        with urllib.request.urlopen(request, timeout=self._timeout_seconds) as response:
             body = response.read().decode("utf-8")
 
         data = json.loads(body)
         choices = data.get("choices") or []
         if not choices:
-            raise RuntimeError(
-                "OpenAI-compatible LLM response did not include any choices."
-            )
+            raise RuntimeError("OpenAI-compatible LLM response did not include any choices.")
 
         message = choices[0].get("message") or {}
         answer = message.get("content") or choices[0].get("text")
         if isinstance(answer, list):
-            answer = "".join(
-                part.get("text", "")
-                for part in answer
-                if isinstance(part, dict)
-            )
+            answer = "".join(part.get("text", "") for part in answer if isinstance(part, dict))
         if not isinstance(answer, str) or not answer.strip():
             raise RuntimeError(
-                "OpenAI-compatible LLM response must include a "
-                "non-empty message.content field."
+                "OpenAI-compatible LLM response must include a non-empty message.content field."
             )
         return answer.strip()
 
@@ -281,10 +328,7 @@ class AzureOpenAILLMClient(OpenAICompatibleLLMClient):
         super().__init__(
             api_key,
             deployment,
-            endpoint=(
-                f"{endpoint.rstrip('/')}/openai/deployments/"
-                f"{deployment}/chat/completions"
-            ),
+            endpoint=(f"{endpoint.rstrip('/')}/openai/deployments/{deployment}/chat/completions"),
             timeout_seconds=timeout_seconds,
             transport=transport,
             api_version=api_version,

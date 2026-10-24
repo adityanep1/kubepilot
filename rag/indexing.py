@@ -33,10 +33,7 @@ def build_runbook_index(
 
     model = embedding_model or HashingEmbeddingModel()
     documents = chunk_markdown(load_markdown_documents(runbooks_dir))
-    vectors = [
-        model.embed(f"{document.title}\n{document.content}")
-        for document in documents
-    ]
+    vectors = [model.embed(f"{document.title}\n{document.content}") for document in documents]
     return PersistedIndex(
         version=INDEX_VERSION,
         embedding_model=type(model).__name__,

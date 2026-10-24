@@ -67,9 +67,7 @@ class InMemoryKubernetesClient:
             return self._deployments
 
         return tuple(
-            deployment
-            for deployment in self._deployments
-            if deployment.namespace == namespace
+            deployment for deployment in self._deployments if deployment.namespace == namespace
         )
 
     async def get_deployment(self, namespace: str, name: str) -> WorkloadHealth | None:
@@ -255,10 +253,7 @@ class KubernetesServiceClient:
         payload = await self._get(f"/api/v1/cluster/health{query}")
         if payload is None:
             return ()
-        return tuple(
-            _workload_from_payload(item)
-            for item in payload.get("workloads", [])
-        )
+        return tuple(_workload_from_payload(item) for item in payload.get("workloads", []))
 
     async def get_deployment(self, namespace: str, name: str) -> WorkloadHealth | None:
         """Return one deployment health summary from the k8s-tool service."""
@@ -481,9 +476,7 @@ def _deployment_to_health(deployment: Any) -> WorkloadHealth:
     unavailable = deployment.status.unavailable_replicas or 0
     status = "Healthy" if ready >= desired and unavailable == 0 else "Degraded"
     reason = (
-        "All replicas are ready"
-        if status == "Healthy"
-        else f"{unavailable} replicas unavailable"
+        "All replicas are ready" if status == "Healthy" else f"{unavailable} replicas unavailable"
     )
     return WorkloadHealth(
         namespace=namespace,

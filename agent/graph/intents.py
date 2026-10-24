@@ -46,12 +46,14 @@ def _incident_report_intent(normalized: str) -> bool:
 
 def _deployment_diagnosis_intent(normalized: str) -> bool:
     mentions_workload = any(
-        workload in normalized
-        for workload in ("checkout", "metrics-scraper", "email-worker")
+        workload in normalized for workload in ("checkout", "metrics-scraper", "email-worker")
     )
     if "deployment" not in normalized and "rollout" not in normalized and not mentions_workload:
         return False
-    return any(
-        term in normalized
-        for term in ("fail", "failing", "diagnose", "why", "status", "incident")
-    ) or "pending" in normalized
+    return (
+        any(
+            term in normalized
+            for term in ("fail", "failing", "diagnose", "why", "status", "incident")
+        )
+        or "pending" in normalized
+    )

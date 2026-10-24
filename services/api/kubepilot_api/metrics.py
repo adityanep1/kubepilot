@@ -39,7 +39,7 @@ def render_metrics() -> str:
     ]
     for (method, path, status_code), count in sorted(REQUESTS.items()):
         lines.append(
-            'kubepilot_http_requests_total{'
+            "kubepilot_http_requests_total{"
             f'method="{method}",path="{path}",status_code="{status_code}"'
             f"}} {count}"
         )
@@ -52,7 +52,7 @@ def render_metrics() -> str:
     )
     for (method, path), total_seconds in sorted(REQUEST_SECONDS.items()):
         lines.append(
-            'kubepilot_http_request_duration_seconds_total{'
+            "kubepilot_http_request_duration_seconds_total{"
             f'method="{method}",path="{path}"'
             f"}} {total_seconds:.6f}"
         )
@@ -83,7 +83,7 @@ def render_metrics() -> str:
     )
     for (operation, result), count in sorted(CLUSTER_TOOL_CALLS.items()):
         lines.append(
-            'kubepilot_cluster_tool_calls_total{'
+            "kubepilot_cluster_tool_calls_total{"
             f'operation="{operation}",result="{result}"'
             f"}} {count}"
         )
@@ -96,7 +96,7 @@ def render_metrics() -> str:
     )
     for operation, total_seconds in sorted(CLUSTER_TOOL_SECONDS.items()):
         lines.append(
-            'kubepilot_cluster_tool_duration_seconds_total{'
+            "kubepilot_cluster_tool_duration_seconds_total{"
             f'operation="{operation}"'
             f"}} {total_seconds:.6f}"
         )
