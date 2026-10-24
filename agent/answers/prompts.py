@@ -4,6 +4,7 @@ from agent.state.chat import Citation
 from rag import RetrievedDocument
 
 
+
 def build_grounded_answer_prompt(
     *,
     message: str,
@@ -12,12 +13,24 @@ def build_grounded_answer_prompt(
 ) -> str:
     """Build a grounded RAG prompt from retrieved runbook chunks."""
 
-    context = "\n".join(
-        f"[{index}] {match.document.title}: {_snippet(match.document.content)}"
-        for index, match in enumerate(matches, start=1)
-    )
+    context_parts = []
 
-    diagnosis = diagnosis_context or "No Kubernetes diagnosis evidence was provided."
+    for index, match in enumerate(matches, start=1):
+        content = match.document.content.strip()
+        title = match.document.title
+
+        context_parts.append(
+            f"[{index}] {title}\n"
+            f"Source: {match.document.source}\n\n"
+            f"{content}"
+        )
+
+    context = "\n\n---\n\n".join(context_parts)
+
+    diagnosis = (
+        diagnosis_context
+        or "No Kubernetes diagnosis evidence was provided."
+    )
 
     return (
         "You are KubePilot, a Kubernetes operations assistant.\n"
@@ -27,10 +40,14 @@ def build_grounded_answer_prompt(
         f"RUNBOOK CONTEXT:\n{context}\n\n"
         f"KUBERNETES EVIDENCE:\n{diagnosis}\n\n"
         "RESPONSE REQUIREMENTS:\n"
-        "- Be concise.\n"
+        "- Preserve Markdown headings, lists, and code fences from the context.\n"
+        "- Keep commands inside fenced code blocks.\n"
+        "- Do not flatten multiple lines into one paragraph.\n"
+        "- Be concise and provide actionable operational steps.\n"
         "- Cite source numbers when making runbook-backed claims.\n"
-        "- Prefer concrete operational next steps."
+        "- Do not invent Kubernetes evidence or claim commands were executed."
     )
+
 
 
 def citations_from_matches(matches: list[RetrievedDocument]) -> tuple[Citation, ...]:
@@ -58,10 +75,11 @@ def citations_from_matches(matches: list[RetrievedDocument]) -> tuple[Citation, 
     return tuple(citations)
 
 
-def _snippet(content: str, *, max_length: int = 220) -> str:
-    compact = " ".join(content.split())
+def _snippet(content: str, *, max_length: int = 4000) -> str:
+    """Preserve runbook Markdown while limiting excessively large content."""
+    content = content.strip()
 
-    if len(compact) <= max_length:
-        return compact
+    if len(content) <= max_length:
+        return content
 
-    return f"{compact[: max_length - 3].rstrip()}..."
+    return content[:max_length].rstrip() + "\n\n[Content truncated]"

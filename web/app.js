@@ -446,12 +446,122 @@ async function sendChat(message) {
   }
 }
 
+
+
+function renderMarkdown(markdown) {
+  let source = String(markdown ?? "").replace(/\r\n?/g, "\n");
+
+  // Recover Markdown structure when the API flattens it into one line.
+  source = source
+    .replace(/[ \t]*```([a-zA-Z0-9_-]*)[ \t]*/g, "\n```$1\n")
+    .replace(/[ \t]*(#{1,6}\s+)/g, "\n$1")
+    .replace(/[ \t]+(?=\d+[.)]\s+)/g, "\n")
+    .replace(/[ \t]+(?=[-*]\s+)/g, "\n")
+    .replace(
+      /\s+(?=(?:List pods and restart counts|Inspect a pod|Read current logs|Check recent events|Useful Commands)\s*:)/gi,
+      "\n"
+    );
+
+  const html = [];
+  const lines = source.split("\n");
+  let inCodeBlock = false;
+  let codeLines = [];
+  let listType = null;
+
+  function closeList() {
+    if (listType) {
+      html.push(`</${listType}>`);
+      listType = null;
+    }
+  }
+
+  function renderInline(text) {
+    // Escape untrusted text before adding our own safe formatting.
+    return escapeHtml(text)
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*(.+?)\*/g, "<em>$1</em>")
+      .replace(
+        /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+      );
+  }
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (/^```/.test(trimmed)) {
+      closeList();
+
+      if (inCodeBlock) {
+        html.push(
+          `<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`
+        );
+        codeLines = [];
+        inCodeBlock = false;
+      } else {
+        inCodeBlock = true;
+      }
+
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeLines.push(line);
+      continue;
+    }
+
+    if (!trimmed) {
+      closeList();
+      continue;
+    }
+
+    const heading = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (heading) {
+      closeList();
+      const level = heading[1].length;
+      html.push(
+        `<h${level}>${renderInline(heading[2])}</h${level}>`
+      );
+      continue;
+    }
+
+    const unordered = trimmed.match(/^[-*]\s+(.+)$/);
+    const ordered = trimmed.match(/^\d+[.)]\s+(.+)$/);
+
+    if (unordered || ordered) {
+      const nextType = unordered ? "ul" : "ol";
+
+      if (listType !== nextType) {
+        closeList();
+        listType = nextType;
+        html.push(`<${listType}>`);
+      }
+
+      html.push(`<li>${renderInline((unordered || ordered)[1])}</li>`);
+      continue;
+    }
+
+    closeList();
+    html.push(`<p>${renderInline(trimmed)}</p>`);
+  }
+
+  closeList();
+
+  // Preserve a code block even if the response omitted its closing fence.
+  if (inCodeBlock) {
+    html.push(
+      `<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`
+    );
+  }
+
+  return html.join("");
+}
+
+
+
 function renderChatAnswer(response) {
-  const answer = String(response.answer || "")
-    .split("\n")
-    .filter((line) => line.trim())
-    .map((line) => `<p>${escapeHtml(line)}</p>`)
-    .join("");
+ const answer = renderMarkdown(response.answer || "");
   const sources = response.sources?.length
     ? `
       <div class="source-list">

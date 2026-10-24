@@ -1,3 +1,4 @@
+
 {"query":"deployment image pull failing","expected_sources":["docs/runbooks/deployment-rollout-failures.md","docs/runbooks/image-pull-backoff.md"]}
 {"query":"rolling restart a deployment","expected_sources":["docs/runbooks/rolling-restart.md"]}
 {"query":"why are pods restarting","expected_sources":["docs/runbooks/pod-restarts.md"]}
@@ -10,3 +11,21 @@
 {"query":"application is failing readiness checks","expected_sources":["docs/runbooks/readiness-probe-failures.md"]}
 {"query":"deployment is unhealthy","expected_sources":["docs/runbooks/unhealthy-workloads.md"]}
 {"query":"workload has unhealthy pods","expected_sources":["docs/runbooks/unhealthy-workloads.md"]}
+{"query":"container keeps crashing after startup","expected_sources":["docs/runbooks/pod-restarts.md"]}
+{"query":"container was killed because of memory","expected_sources":["docs/runbooks/pod-restarts.md"]}
+{"query":"application keeps restarting after deployment","expected_sources":["docs/runbooks/pod-restarts.md"]}
+{"query":"image cannot be downloaded from registry","expected_sources":["docs/runbooks/image-pull-backoff.md"]}
+{"query":"private registry authentication failed","expected_sources":["docs/runbooks/image-pull-backoff.md"]}
+{"query":"pods have no available CPU","expected_sources":["docs/runbooks/pending-pods-scheduling.md"]}
+{"query":"pod is stuck in pending state","expected_sources":["docs/runbooks/pending-pods-scheduling.md"]}
+{"query":"insufficient memory prevents pod scheduling","expected_sources":["docs/runbooks/pending-pods-scheduling.md"]}
+{"query":"readiness health check keeps failing","expected_sources":["docs/runbooks/readiness-probe-failures.md"]}
+{"query":"container starts but never becomes ready","expected_sources":["docs/runbooks/readiness-probe-failures.md"]}
+{"query":"deployment rollout is stuck","expected_sources":["docs/runbooks/deployment-rollout-failures.md"]}
+{"query":"new deployment replicas are not becoming available","expected_sources":["docs/runbooks/deployment-rollout-failures.md"]}
+{"query":"how do I restart a deployment safely","expected_sources":["docs/runbooks/rolling-restart.md"]}
+{"query":"restart all pods gradually without downtime","expected_sources":["docs/runbooks/rolling-restart.md"]}
+{"query":"application cannot connect to database","expected_sources":["docs/runbooks/dependency-connection-failures.md"]}
+{"query":"database connection timeout from application","expected_sources":["docs/runbooks/dependency-connection-failures.md"]}
+{"query":"application cannot resolve dependency hostname","expected_sources":["docs/runbooks/dependency-connection-failures.md"]}
+{"query":"workload has unhealthy replicas and failed pods","expected_sources":["docs/runbooks/unhealthy-workloads.md"]}

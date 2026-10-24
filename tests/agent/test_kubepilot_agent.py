@@ -96,12 +96,9 @@ async def test_agent_returns_runbook_sources_when_available() -> None:
 
     output = await agent.run(AgentInput(message="Why is my deployment failing?"))
 
-    assert output.answer == (
-        'KubePilot received your question: "Why is my deployment failing?". '
-        "Based on the retrieved runbooks, "
-        "[1] Deployment rollout failures: ImagePullBackOff and rollout failures. "
-        "Sources: Deployment rollout failures."
-    )
+    assert "Troubleshooting Deployment Rollouts" in output.answer
+    assert "kubectl rollout status" in output.answer
+    assert "Deployment rollout failures" in output.answer
     assert output.sources == ("Deployment rollout failures",)
     assert output.citations[0].source == "deployment.md"
 

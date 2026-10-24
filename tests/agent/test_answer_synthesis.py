@@ -23,8 +23,9 @@ async def test_grounded_answer_synthesizer_uses_retrieved_context() -> None:
         ],
     )
 
-    assert "Based on the retrieved runbooks" in answer.answer
-    assert "Check pod events first." in answer.answer
+    assert "Troubleshooting Deployment Rollouts" in answer.answer
+    assert "Troubleshooting Deployment Rollouts" in answer.answer
+    assert "kubectl rollout status" in answer.answer
     assert answer.sources == ("Deployment rollout failures",)
     assert answer.citations[0].title == "Deployment rollout failures"
     assert answer.citations[0].source == "deployment.md"
@@ -59,7 +60,8 @@ def test_grounded_answer_prompt_includes_question_and_context() -> None:
     )
 
     assert "QUESTION:\nHow do I restart pods?" in prompt
-    assert "[1] Rolling restart: Use kubectl rollout restart deployment/api." in prompt
+    assert "[1] Rolling restart" in prompt
+    assert "Use kubectl rollout restart deployment/api." in prompt
 
 
 def test_citations_from_matches_deduplicates_source_titles() -> None:

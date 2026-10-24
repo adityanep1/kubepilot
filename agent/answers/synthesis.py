@@ -75,7 +75,7 @@ class GroundedAnswerSynthesizer:
         citations = citations_from_matches(matches)
         source_list = ", ".join(sources)
 
-        answer = f"{base_answer} {model_answer} Sources: {source_list}.".strip()
+        answer = f"{base_answer}" + chr(10) * 2 + f"{model_answer}" + chr(10) * 2 + f"**Sources:** {source_list}".strip()
 
         return GroundedAnswer(
             answer=answer,
